@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jump Tracker">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Jump Program Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F3F5F8;--card:#fff;--ink:#0E2238;--mute:#5B6B7D;--line:#DCE2EA;--accent:#F26A1B;--accent-ink:#fff;--done:#1F7A4D;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1624;--card:#12233A;--ink:#EAF0F7;--mute:#93A3B6;--line:#243card;--line:#26384F;--done:#4CC38A}}
+:root[data-theme="dark"]{--bg:#0B1624;--card:#12233A;--ink:#EAF0F7;--mute:#93A3B6;--line:#26384F;--done:#4CC38A}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.4 Barlow,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:560px;margin:0 auto;padding:20px 16px 48px}
+h1,h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;margin:0;letter-spacing:.01em}
+h1{font-size:40px;line-height:1;font-weight:700}
+h2{font-size:28px;font-weight:700}
+.mute{color:var(--mute);font-size:14px}
+button{font:inherit;color:inherit;cursor:pointer}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:12px 0 6px}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.go{display:block;width:100%;margin:20px 0 24px;padding:18px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);font:700 24px "Barlow Condensed",sans-serif;letter-spacing:.03em}
+.go small{display:block;font:500 14px Barlow,sans-serif;opacity:.9}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.wk{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:left}
+.wk b{font:700 20px "Barlow Condensed",sans-serif;display:block}
+.wk.full{border-color:var(--done)}
+.wk .bar{height:6px;margin:8px 0 4px}
+.wk.full .bar i{background:var(--done)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.nav{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px}
+.nav:disabled{opacity:.35}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th{font-size:13px;color:var(--mute);font-weight:600;padding:10px 4px;text-align:center}
+th:first-child{text-align:left;padding-left:12px}
+td{border-top:1px solid var(--line);padding:8px 4px;text-align:center}
+td:first-child{text-align:left;padding-left:12px}
+td span{display:block;font-size:13px;color:var(--mute)}
+td strong{font-weight:600;font-size:15px}
+.cb{width:40px;height:40px;border-radius:10px;border:2px solid var(--line);background:transparent;font-size:22px;line-height:1;color:transparent}
+.cb.on{background:var(--done);border-color:var(--done);color:#fff}
+.dash{color:var(--line)}
+.note{margin-top:14px;font-size:14px;color:var(--mute)}
+.chk{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
+.reset{margin-top:28px;background:none;border:0;color:var(--mute);text-decoration:underline;font-size:14px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+const D3=["Tue","Wed","Thu"],D3b=["Mon","Wed","Fri"];
+// [label, days, calf, thrust, leap, burnouts, blastoffs, lunge, sprints60, sprints120]
+const W=[
+["Pre-Week",D3,"1 × 10","2 × 10","1 × 10","1 × 50","2 × 15","1 × 10","2 × 60's","2 × 120's"],
+["Week 1",D3,"2 × 10","2 × 15","2 × 10","2 × 50","2 × 20","1 × 10","3 × 60's","2 × 120's"],
+["Week 2",D3b,"2 × 12","2 × 20","3 × 10","2 × 75","2 × 25","1 × 12","4 × 60's","2 × 120's"],
+["Week 3",D3,"2 × 15","2 × 25","4 × 8","2 × 100","3 × 20","1 × 15","4 × 60's","3 × 120's"],
+["Week 4",D3b,"2 × 20","2 × 30","4 × 12","2 × 125","3 × 25","2 × 10","4 × 60's","4 × 120's"],
+["Week 5",D3,"3 × 25","3 × 25","4 × 15","2 × 150","4 × 25","2 × 15","5 × 60's","4 × 120's"],
+["Week 6",D3b,"3 × 30","3 × 30","4 × 20","2 × 175","5 × 30","2 × 20","5 × 60's","5 × 120's"],
+["Week 7",D3,"4 × 30","2 × 50","5 × 25","3 × 200","5 × 35","2 × 25","6 × 60's","6 × 120's"],
+["Week 8",D3b,"4 × 40","2 × 60","5 × 35","4 × 250","5 × 45","3 × 20","8 × 60's","8 × 120's"],
+["Week 9",null,"rest"],
+["Week 10",D3b,"5 × 45","4 × 50","5 × 40","4 × 275","5 × 50","3 × 30","9 × 60's","9 × 120's"],
+["Week 11",D3,"5 × 50","4 × 60","4 × 60","4 × 300","5 × 65","4 × 30","10 × 60's","10 × 120's"],
+["Week 12",D3b,"6 × 60","5 × 60","5 × 65","4 × 350","5 × 75","5 × 30","12 × 60's","12 × 120's"],
+["Week 13",null,"done"]
+];
+const REST=["I completed my rest week.","I kept sport activity reasonable and rested my legs.","I am ready to begin Week 11."];
+const DONE=["I completed Week 12.","I completed the program.","I will track my highest jump over the next 2 weeks."];
+// rows: name, note, prescription index, days allowed (0,1,2)
+const ROWS=[["Calf raises","single leg",2,[0,1,2]],["Thrust ups","max height",3,[0,1,2]],["Leap ups","max height",4,[0,1,2]],["Thrust ups","max height",3,[0,1,2]],["Burnouts","2–3 inch jumps",5,[0,1,2]],["Blastoffs","last rep max height",6,[1]],["Lunge jumps","",7,[0,2]],["Sprints","",8,[0,2]]];
+let S={};
+try{S=JSON.parse(localStorage.getItem("jumpTracker")||"{}")}catch(e){S={}}
+const save=()=>{try{localStorage.setItem("jumpTracker",JSON.stringify(S))}catch(e){}};
+const rx=(w,r)=>r[2]===8?`${w[8]} · ${w[9]}`:w[r[2]];
+function keys(i){const w=W[i];
+  if(w[1]===null)return (w[2]==="rest"?REST:DONE).map((_,n)=>`${i}:c${n}`);
+  const k=[];ROWS.forEach((r,ri)=>r[3].forEach(d=>k.push(`${i}:${ri}:${d}`)));return k}
+const prog=i=>{const k=keys(i);return[k.filter(x=>S[x]).length,k.length]};
+function totals(){let a=0,b=0;W.forEach((_,i)=>{const[x,y]=prog(i);a+=x;b+=y});return[a,b]}
+function nextWeek(){for(let i=0;i<W.length;i++){const[x,y]=prog(i);if(x<y)return i}return W.length-1}
+const $=document.getElementById("app");
+function home(){
+  const[a,b]=totals(),n=nextWeek(),[x,y]=prog(n),started=a>0;
+  $.innerHTML=`<h1>Jump Program</h1><div class="mute">13 weeks · ${a} of ${b} boxes checked</div>
+  <div class="bar"><i style="width:${b?a/b*100:0}%"></i></div>
+  <button class="go" data-go="${n}">${started?"Continue workouts":"Start workouts"}<small>${W[n][0]} · ${x} of ${y} done</small></button>
+  <div class="grid">${W.map((w,i)=>{const[p,q]=prog(i);return`<button class="wk ${p===q?"full":""}" data-go="${i}"><b>${w[0]}</b><span class="mute">${w[1]?w[1].join(" / "):w[2]==="rest"?"Rest week":"Finish"}</span><div class="bar"><i style="width:${p/q*100}%"></i></div><span class="mute">${p}/${q}</span></button>`}).join("")}</div>
+  <button class="reset" id="reset">Reset all progress</button>`;
+  $.querySelectorAll("[data-go]").forEach(el=>el.onclick=()=>{location.hash="w"+el.dataset.go});
+  document.getElementById("reset").onclick=()=>{if(confirm("Clear all checked boxes?")){S={};save();home()}};
+}
+function week(i){
+  const w=W[i],[p,q]=prog(i);
+  let body="";
+  if(!w[1]){
+    const L=w[2]==="rest"?REST:DONE;
+    body=(w[2]==="rest"?`<p class="mute">You can play your sport, but rest your legs as much as possible. No jump workouts this week.</p>`:`<p class="mute">You should be jumping your highest within 2 weeks. Give your body time to respond.</p>`)+
+      L.map((t,n)=>`<button class="chk" data-k="${i}:c${n}"><span class="cb ${S[`${i}:c${n}`]?"on":""}">✓</span>${t}</button>`).join("");
+  }else{
+    body=`<table><tr><th>Exercise</th>${w[1].map(d=>`<th>${d}</th>`).join("")}</tr>${ROWS.map((r,ri)=>`<tr><td><strong>${r[0]}</strong><span>${rx(w,r)}${r[1]?" · "+r[1]:""}</span></td>${[0,1,2].map(d=>{const k=`${i}:${ri}:${d}`;return r[3].includes(d)?`<td><button class="cb ${S[k]?"on":""}" data-k="${k}" aria-label="${r[0]} ${w[1][d]}">✓</button></td>`:`<td class="dash">–</td>`}).join("")}</tr>`).join("")}</table>
+    <p class="note">Warm up with dynamic stretching, sprints and side shuffles. Rest 1–2 min between sets of the same exercise, none between different exercises.</p>`;
+  }
+  $.innerHTML=`<div class="top"><button class="nav" id="home">‹ All weeks</button><span class="mute">${p} of ${q} done</span></div>
+  <h2>${w[0]}${w[1]?" checklist":""}</h2>
+  <div class="mute">${w[1]?w[1].join(" · "):""}</div><div class="bar"><i style="width:${p/q*100}%"></i></div>${body}
+  <div class="top" style="margin-top:20px"><button class="nav" id="prev" ${i===0?"disabled":""}>‹ Previous</button><button class="nav" id="next" ${i===W.length-1?"disabled":""}>Next ›</button></div>`;
+  $.querySelectorAll("[data-k]").forEach(el=>el.onclick=()=>{const k=el.dataset.k;S[k]=!S[k];if(!S[k])delete S[k];save();week(i)});
+  document.getElementById("home").onclick=()=>{location.hash=""};
+  document.getElementById("prev").onclick=()=>{location.hash="w"+(i-1)};
+  document.getElementById("next").onclick=()=>{location.hash="w"+(i+1)};
+}
+function route(){const m=location.hash.match(/^#w(\d+)$/);window.scrollTo(0,0);m&&W[+m[1]]?week(+m[1]):home()}
+window.addEventListener("hashchange",route);route();
+</script>
+</body>
+</html>
